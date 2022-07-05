@@ -392,16 +392,15 @@ is_new_etcd_cluster() {
 }
 
 ########################
-# Checks if there are enough active members, will also set ETCD_ACTIVE_ENDPOINTS
+# Setup ETCD_ACTIVE_ENDPOINTS environment variable, will return the number of active endpoints
 # Globals:
 #   ETCD_*
 # Arguments:
 #   None
 # Returns:
-#   Boolean
+#   Number
 ########################
-is_healthy_etcd_cluster() {
-    local return_value=0
+setup_etcd_active_endpoints() {
     local active_endpoints=0
     local -a extra_flags active_endpoints_array
     local -a endpoints_array=()
@@ -425,6 +424,21 @@ is_healthy_etcd_cluster() {
         ETCD_ACTIVE_ENDPOINTS=$(echo "${active_endpoints_array[*]}" | tr ' ' ',')
         export ETCD_ACTIVE_ENDPOINTS
     fi
+    echo $active_endpoints
+}
+
+########################
+# Checks if there are enough active members, will also set ETCD_ACTIVE_ENDPOINTS
+# Globals:
+#   ETCD_*
+# Arguments:
+#   None
+# Returns:
+#   Boolean
+########################
+is_healthy_etcd_cluster() {
+    local return_value=0
+    local active_endpoints=$(setup_etcd_active_endpoints)
 
     if is_boolean_yes "$ETCD_DISASTER_RECOVERY"; then
         if [[ -f "/snapshots/.disaster_recovery" ]]; then
@@ -748,6 +762,11 @@ get_member_id() {
     fi
     local ret
     local -a extra_flags
+
+    if is_empty_value "${ETCD_ACTIVE_ENDPOINTS}"; then
+        setup_etcd_active_endpoints >/dev/null 2>&1
+    fi
+
     read -r -a extra_flags <<<"$(etcdctl_auth_flags)"
     extra_flags+=("--endpoints=${ETCD_ACTIVE_ENDPOINTS}")
     ret=$(etcdctl "${extra_flags[@]}" member list | grep -w "$ETCD_INITIAL_ADVERTISE_PEER_URLS" | awk -F "," '{ print $1 }')

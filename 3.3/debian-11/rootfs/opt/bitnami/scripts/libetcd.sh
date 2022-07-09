@@ -764,7 +764,8 @@ get_member_id() {
     local ret
     local -a extra_flags
 
-    if is_empty_value "${ETCD_ACTIVE_ENDPOINTS}"; then
+    local etcd_active_endpoints=${ETCD_ACTIVE_ENDPOINTS:-}
+    if [ -z ${etcd_active_endpoints} ]; then
         setup_etcd_active_endpoints >/dev/null 2>&1
     fi
 

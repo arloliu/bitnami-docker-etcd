@@ -689,7 +689,7 @@ etcd_initialize() {
                 replace_in_file "$ETCD_NEW_MEMBERS_ENV_FILE" "^" "export "
                 etcd_store_member_id
             elif ! is_empty_value "$member_id"; then
-                info "Updating member in existing cluster"
+                info "Updating member in existing cluster"s
                 export ETCD_INITIAL_CLUSTER_STATE=existing
                 [[ -f "$ETCD_CONF_FILE" ]] && etcd_conf_write "initial-cluster-state" "$ETCD_INITIAL_CLUSTER_STATE"
                 read -r -a extra_flags <<<"$(etcdctl_auth_flags)"
@@ -765,7 +765,7 @@ get_member_id() {
     local -a extra_flags
 
     local etcd_active_endpoints=${ETCD_ACTIVE_ENDPOINTS:-}
-    if [ -z ${etcd_active_endpoints} ]; then
+    if is_empty_value "${etcd_active_endpoints}"; then
         setup_etcd_active_endpoints >/dev/null 2>&1
     fi
 
